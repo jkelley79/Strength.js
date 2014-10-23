@@ -16,8 +16,7 @@ Firstly include jQuery and the strength.css and strength.js files. Place these b
 
 ##### Create a field you want to validate for word count
 
-This expects the element to not have an id as it will be reset in the plugin.
-    <textarea id="myTextArea"></textarea>
+    <textarea></textarea>
 
 ##### Initiate the plugin
 
@@ -26,7 +25,7 @@ Once you have created your field you will need to initiate the plugin.
 At its most basic level you can initiate the plugin like:
 
     $(document).ready(function ($) {
-        $("#myTextArea").strength();
+        $("textarea").strength();
 
     });
 
