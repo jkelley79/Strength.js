@@ -3,24 +3,24 @@
  * Original author: @aaronlumsden
  * Further changes, comments: @aaronlumsden
  * Licensed under the MIT license
+ *
+ *
+ * Modified for use to be based upon number of unique words in a element.
  */
-;(function ( $, window, document, undefined ) {
+(function ($, window, document, undefined) {
 
     var pluginName = "strength",
         defaults = {
             strengthClass: 'strength',
             strengthMeterClass: 'strength_meter',
-            strengthButtonClass: 'button_strength',
-            strengthButtonText: 'Show Password',
-            strengthButtonTextToggle: 'Hide Password'
+            threshHolds: [5, 10, 15],
+            unique: false
         };
-
-       // $('<style>body { background-color: red; color: white; }</style>').appendTo('head');
 
     function Plugin( element, options ) {
         this.element = element;
         this.$elem = $(this.element);
-        this.options = $.extend( {}, defaults, options );
+        this.options = $.extend({}, defaults, options);
         this._defaults = defaults;
         this._name = pluginName;
         this.init();
@@ -28,135 +28,108 @@
 
     Plugin.prototype = {
 
-        init: function() {
+        init: function () {
 
+            /**
+             * Check the strength of an item.
+             * @param element_id
+             */
+            function check_strength(element_id, threshHolds, unique) {
 
-            var characters = 0;
-            var capitalletters = 0;
-            var loweletters = 0;
-            var number = 0;
-            var special = 0;
+                var thisval = $('#' + element_id).val();
+                var word_count = 0;
 
-            var upperCase= new RegExp('[A-Z]');
-            var lowerCase= new RegExp('[a-z]');
-            var numbers = new RegExp('[0-9]');
-            var specialchars = new RegExp('([!,%,&,@,#,$,^,*,?,_,~])');
+                // Get the word count
+                var word_count_array = thisval.match(/\S+/g);
 
-            function GetPercentage(a, b) {
-                    return ((b / a) * 100);
+                if (word_count_array) {
+
+                    // Build a unique set of words.
+                    var unique_words = [];
+                    for (var i = 0; i < word_count_array.length; i++) {
+                        if (unique === false || $.inArray(word_count_array[i], unique_words) === -1) {
+                            unique_words.push(word_count_array[i]);
+                        }
+                    }
+                    word_count = unique_words.length;
                 }
 
-                function check_strength(thisval,thisid){
-                     if (thisval.length > 8) { characters = 1; } else { characters = 0; };
-                    if (thisval.match(upperCase)) { capitalletters = 1} else { capitalletters = 0; };
-                    if (thisval.match(lowerCase)) { loweletters = 1}  else { loweletters = 0; };
-                    if (thisval.match(numbers)) { number = 1}  else { number = 0; };
-
-                    var total = characters + capitalletters + loweletters + number + special;
-                    var totalpercent = GetPercentage(7, total).toFixed(0);
-
-                    if (!thisval.length) {total = -1;}
-
-                    get_total(total,thisid);
-                }
-
-            function get_total(total,thisid){
-
-                  var thismeter = $('div[data-meter="'+thisid+'"]');
-                    if (total <= 1) {
-                   thismeter.removeClass();
-                   thismeter.addClass('veryweak').html('very weak');
-                } else if (total == 2){
-                    thismeter.removeClass();
-                   thismeter.addClass('weak').html('weak');
-                } else if(total == 3){
-                    thismeter.removeClass();
-                   thismeter.addClass('medium').html('medium');
-
-                } else {
-                     thismeter.removeClass();
-                   thismeter.addClass('strong').html('strong');
-                }
-                
-                if (total == -1) { thismeter.removeClass().html('Strength'); }
+                // Determine which class to apply.
+                get_class(thisid, word_count, threshHolds);
             }
 
+            function get_class(thisid, word_count, threshHolds) {
 
+                // Two elements one for the meter to before the element
+                var thismeter = $('div[data-meter="' + thisid + '"]');
+                // Another for the text describing it.
+                var thistext = $('p[data-meter-text="' + thisid + '"]');
 
-
-
-            var isShown = false;
-            var strengthButtonText = this.options.strengthButtonText;
-            var strengthButtonTextToggle = this.options.strengthButtonTextToggle;
-
-
-            thisid = this.$elem.attr('id');
-
-            this.$elem.addClass(this.options.strengthClass).attr('data-password',thisid).after('<input style="display:none" class="'+this.options.strengthClass+'" data-password="'+thisid+'" type="text" name="" value=""><a data-password-button="'+thisid+'" href="" class="'+this.options.strengthButtonClass+'">'+this.options.strengthButtonText+'</a><div class="'+this.options.strengthMeterClass+'"><div data-meter="'+thisid+'">Strength</div></div>');
-             
-            this.$elem.bind('keyup keydown', function(event) {
-                thisval = $('#'+thisid).val();
-                $('input[type="text"][data-password="'+thisid+'"]').val(thisval);
-                check_strength(thisval,thisid);
-                
-            });
-
-             $('input[type="text"][data-password="'+thisid+'"]').bind('keyup keydown', function(event) {
-                thisval = $('input[type="text"][data-password="'+thisid+'"]').val();
-                console.log(thisval);
-                $('input[type="password"][data-password="'+thisid+'"]').val(thisval);
-                check_strength(thisval,thisid);
-                
-            });
-
-
-
-            $(document.body).on('click', '.'+this.options.strengthButtonClass, function(e) {
-                e.preventDefault();
-
-               thisclass = 'hide_'+$(this).attr('class');
-
-
-
-
-                if (isShown) {
-                    $('input[type="text"][data-password="'+thisid+'"]').hide();
-                    $('input[type="password"][data-password="'+thisid+'"]').show().focus();
-                    $('a[data-password-button="'+thisid+'"]').removeClass(thisclass).html(strengthButtonText);
-                    isShown = false;
-
-                } else {
-                    $('input[type="text"][data-password="'+thisid+'"]').show().focus();
-                    $('input[type="password"][data-password="'+thisid+'"]').hide();
-                    $('a[data-password-button="'+thisid+'"]').addClass(thisclass).html(strengthButtonTextToggle);
-                    isShown = true;
-   
+                // Based on word count determine what to show.
+                var strengthClass = 'veryweak';
+                var strengthText = 'Very weak';
+                if (word_count > threshHolds[0] && word_count < threshHolds[1]) {
+                    strengthClass = 'weak';
+                    strengthText = 'Weak';
+                } else if (word_count >= threshHolds[1] && word_count < threshHolds[2]) {
+                    strengthClass = 'medium';
+                    strengthText = 'Medium';
+                } else if (word_count >= threshHolds[2]) {
+                    strengthClass = 'strong';
+                    strengthText = 'Strong';
                 }
 
+                var thisval = $('#' + thisid).val();
 
-               
+                if (thisval === undefined || thisval.length === 0) {
+                    // If there is no value then clear it.
+                    thismeter.removeClass();
+                    thistext.html('');
+                } else {
+
+                    // Remove any class from the meter
+                    thismeter.removeClass();
+                    thismeter.addClass(strengthClass);
+
+                    // Add the text describing the strength
+                    thistext.html(strengthText);
+                }
+            }
+
+            // Give the element a unique id.
+            var thisid = this.$elem.attr('id');
+            if (!thisid) {
+                thisid = new Date().getTime();
+            }
+            this.$elem.attr('id', thisid);
+
+            var threshHolds = this.options.threshHolds;
+            if (threshHolds.length != 3) {
+                threshHolds = this.defaults.threshHolds;
+            }
+            var unique = this.options.unique;
+
+            // Add the strength class and the elements that need to go before it.
+            this.$elem.addClass(this.options.strengthClass)
+                .before('<div class="' + this.options.strengthMeterClass + '"><div data-meter="' + thisid + '"></div><p data-meter-text="' + thisid + '"></p></div>');
+
+            // Bind to the keyup and keydown.
+            this.$elem.bind('keyup keydown', function () {
+                check_strength(thisid, threshHolds, unique);
             });
-
-
-         
-            
-        },
-
-        yourOtherFunction: function(el, options) {
-            // some logic
         }
     };
 
     // A really lightweight plugin wrapper around the constructor,
     // preventing against multiple instantiations
-    $.fn[pluginName] = function ( options ) {
+    $.fn[pluginName] = function (options) {
         return this.each(function () {
             if (!$.data(this, "plugin_" + pluginName)) {
-                $.data(this, "plugin_" + pluginName, new Plugin( this, options ));
+                $.data(this, "plugin_" + pluginName, new Plugin(this, options));
             }
         });
     };
 
-})( jQuery, window, document );
+})(jQuery, window, document);
 
 

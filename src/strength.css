@@ -2,33 +2,52 @@
 /* CSS Document */
 
 .strength_meter{
-	height:23px;
-width: 154px;
-	background:silver;
-	
+  position: relative;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 5px;
+  z-index: 0;
+  opacity: 0.5;
+  border-radius:1px;
+  //padding-right:13px;
+  background-color: #d3d3d3;
 }
+
 .strength_meter div{
-	height:23px;
-	width:100%;
-	height:23px;
-	text-align:center;
-	color:black;
-	font-weight:bold;
-	line-height:23px;
+  width:0%;
+  height: 5px;
+  text-align: right;
+  color: #000;
+  line-height: 43px;
+  -webkit-transition: all .3s ease-in-out;
+  -moz-transition: all .3s ease-in-out;
+  -o-transition: all .3s ease-in-out;
+  -ms-transition: all .3s ease-in-out;
+  transition: all .3s ease-in-out;
+  //padding-right: 0px;
+  border-radius:5px;
 }
+.strength_meter p{
+  position: absolute;
+  right: 0;
+  top: -1.25rem;
+  color: #000000;
+}
+
 .veryweak{
-	background-color: #FFA0A0;
-border-color: #F04040!important
+  background-color: red;
+  width:25%!important;
 }
 .weak{
-background-color: #FFB78C;
-border-color: #FF853C!important;
+  background-color: orange;
+  width:50%!important;
 }
 .medium{
-background-color: #FFEC8B;
-border-color: #FC0!important;
+  background-color: yellow;
+  width:75%!important;
 }
 .strong{
-background-color: #C3FF88;
-border-color: #8DFF1C!important;
+  background-color: green;
+  width:100%!important;
 }
